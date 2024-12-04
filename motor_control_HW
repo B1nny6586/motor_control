@@ -1,0 +1,66 @@
+#include <stdio.h>
+#include <wiringPi.h>
+
+#define MOTOR_PIN 1 // Define the GPIO pin for the motor
+
+void setup() {
+    wiringPiSetup(); // Initialize wiringPi
+    pinMode(MOTOR_PIN, OUTPUT); // Set the motor pin as output
+}
+
+void motorOn() {
+    digitalWrite(MOTOR_PIN, HIGH); // Turn the motor on
+    printf("Motor is ON\n");
+}
+
+void motorOff() {
+    digitalWrite(MOTOR_PIN, LOW); // Turn the motor off
+    printf("Motor is OFF\n");
+}
+void setMotorSpeed(int speed) {
+    if (speed < 0 || speed > 100) {
+        printf("Invalid speed. Please enter a value between 0 and 100.\n");
+        return;
+    }
+    int pwmValue = (speed * 1023) / 100; // Convert speed percentage to PWM value
+    pwmWrite(MOTOR_PIN, pwmValue); // Set the motor speed
+    printf("Motor speed set to %d%%\n", speed);
+}
+int main() {
+    setup();
+    
+    char command;
+    while (1) {
+        printf("Enter command (o: on, f: off, q: quit): ");
+        scanf(" %c", &command);
+        
+        if (command == 'o') {
+            motorOn();
+            int speed = 0;
+            int increment = 10;
+            while (1) {
+                setMotorSpeed(speed);
+                delay(1000); // Wait for 1 second
+                
+                speed += increment;
+                if (speed >= 150 || speed <= 0) {
+                    increment = -increment; // Reverse the direction of speed change
+                }
+                
+                if (digitalRead(MOTOR_PIN) == LOW) {
+                    break; // Exit the loop if the motor is turned off
+                }
+            }
+        } else if (command == 'f') {
+            motorOff();
+            setMotorSpeed(0);
+        } else if (command == 'q') {
+            motorOff();
+            break;
+        } else {
+            printf("Invalid command\n");
+        }
+    }
+    
+    return 0;
+}
